@@ -1,0 +1,61 @@
+project: test
+applications:
+- name: guard
+  replicationController: node
+  service: web
+  tags:
+    image: offlinehacker/helloworld
+    role: web-service
+    version: v4
+groups:
+- name: gatehub
+  apps:
+  - guard
+  tags: {}
+- name: gatehub-dev
+  apps: []
+  tags: {}
+templates:
+- name: web
+  template: |-
+    kind: Service
+    apiVersion: v1beta3
+    metadata:
+      name: http
+    spec:
+      ports:
+        - port: 80
+          targetPort: 8080
+          protocol: TCP
+      selector:
+        role: {{.role}}
+- name: node
+  template: |-
+    kind: ReplicationController
+    id: node-controller-{{.version}}
+    apiVersion: v1beta1
+    desiredState:
+      replicas: 2
+      replicaSelector:
+        role: {{.role}}
+        version: {{.version}}
+      podTemplate:
+        desiredState:
+          manifest:
+            version: v1beta1
+            id: gatehub-helloworld
+            containers:
+              - name: helloworld
+                image: {{.image}}
+                ports:
+                  - containerPort: 8080
+        labels:
+          role: {{.role}}
+          version: {{.version}}
+          gatehub.net/cluster-service: "true"
+    labels:
+      gatehub.net/cluster-service: "true"
+namespaces:
+- name: ns1
+  group: gatehub
+  tags: {}
