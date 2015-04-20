@@ -340,16 +340,15 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 			}
 			tplRc := rc.(*api.ReplicationController)
 			setMeta(&tplRc.ObjectMeta)
-			rcLogger = rcLogger.WithFields(log.Fields{"rcName": tplRc.Name})
+			rcLogger = rcLogger.WithFields(log.Fields{"rc": tplRc.Name})
 
 			if entity, ok := kubeRcIndex[app.Name].(*Entity); ok {
 				rc := entity.Value.(api.ReplicationController)
 
-				rcLogger = rcLogger.WithFields(log.Fields{"to": tplRc.Name})
 				rcLogger.Debug("Updating rc")
 
 				if tplRc.Name != rc.Name {
-					rcLogger.Debug("Rollupdating")
+					rcLogger.WithFields(log.Fields{"to": tplRc.Name}).Debug("Rollupdating")
 
 					buf := bytes.NewBuffer(nil)
 					updater := kubectl.NewRollingUpdater(nsName, p.Kube)

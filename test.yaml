@@ -4,9 +4,11 @@ applications:
   replicationController: node
   service: web
   tags:
-    image: offlinehacker/helloworld
+    autoupdate: "true"
+    image: helloworld
+    org: offlinehacker
     role: web-service
-    version: v4
+    tag: kekec7
 groups:
 - name: gatehub
   apps:
@@ -32,13 +34,13 @@ templates:
 - name: node
   template: |-
     kind: ReplicationController
-    id: node-controller-{{.version}}
+    id: node-controller-{{.tag}}
     apiVersion: v1beta1
     desiredState:
       replicas: 2
       replicaSelector:
         role: {{.role}}
-        version: {{.version}}
+        version: {{.tag}}
       podTemplate:
         desiredState:
           manifest:
@@ -46,12 +48,12 @@ templates:
             id: gatehub-helloworld
             containers:
               - name: helloworld
-                image: {{.image}}
+                image: {{.org}}/{{.image}}
                 ports:
                   - containerPort: 8080
         labels:
           role: {{.role}}
-          version: {{.version}}
+          version: {{.tag}}
           gatehub.net/cluster-service: "true"
     labels:
       gatehub.net/cluster-service: "true"

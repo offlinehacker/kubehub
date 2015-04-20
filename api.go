@@ -42,6 +42,7 @@ func NewApi(Process *Process) (*Api, error) {
 		rest.Post("/templates", api.createResource(&Process.Config.Templates)),
 		rest.Put("/templates/:name", api.updateResource(&Process.Config.Templates)),
 		rest.Delete("/templates/:name", api.deleteResource(&Process.Config.Templates)),
+		rest.Post("/hook/newtag", api.newtag),
 		rest.Post("/deploy", api.commit),
 		rest.Get("/deploy", api.status),
 	)
@@ -191,6 +192,45 @@ func (a *Api) status(w rest.ResponseWriter, r *rest.Request) {
 		}
 	}
 	w.WriteJson(map[string]interface{}{"state": state, "err": err, "errors": errors, "logs": logs})
+}
+
+func (a *Api) newtag(w rest.ResponseWriter, r *rest.Request) {
+	name := r.URL.Query().Get("image")
+	tag := r.URL.Query().Get("tag")
+	imageFound := false
+
+	log.Debug(name)
+	log.Debug(tag)
+
+	for idx, app := range a.Process.Config.Applications {
+		image, ok := app.Tags["image"]
+		if !ok || image != name {
+			continue
+		}
+
+		_, ok = app.Tags["tag"]
+		if !ok {
+			continue
+		}
+
+		autoupdate, ok := app.Tags["autoupdate"]
+		if !ok || autoupdate != "true" {
+			continue
+		}
+
+		a.Process.Config.Applications[idx].Tags["tag"] = tag
+
+		if err := a.Process.Commit(); err != nil {
+			rest.Error(w, "Cannot commit changes:"+err.Error(), http.StatusInternalServerError)
+			continue
+		}
+
+		imageFound = true
+	}
+
+	if !imageFound {
+		rest.Error(w, "Image not found", http.StatusNotFound)
+	}
 }
 
 func (a *Api) Serve(host string) error {
