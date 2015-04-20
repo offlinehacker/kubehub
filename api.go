@@ -47,7 +47,7 @@ func NewApi(Process *Process) (*Api, error) {
 		rest.Get("/deploy", api.status),
 	)
 	if err != nil {
-		log.Error("Cannot create router", err)
+		log.Errorf("Cannot create router %v", err)
 		return nil, err
 	}
 
@@ -199,8 +199,7 @@ func (a *Api) newtag(w rest.ResponseWriter, r *rest.Request) {
 	tag := r.URL.Query().Get("tag")
 	imageFound := false
 
-	log.Debug(name)
-	log.Debug(tag)
+	log.Debugf("Newtag %v %v", name, tag)
 
 	for idx, app := range a.Process.Config.Applications {
 		image, ok := app.Tags["image"]
@@ -234,10 +233,10 @@ func (a *Api) newtag(w rest.ResponseWriter, r *rest.Request) {
 }
 
 func (a *Api) Serve(host string) error {
-	log.Debug("Listening on", host)
+	log.Info("Listening on", host)
 	err := http.ListenAndServe(host, a.Api.MakeHandler())
 	if err != nil {
-		log.Error("Cannot listen", err)
+		log.Errorf("Cannot listen %v", err)
 	}
 
 	return err

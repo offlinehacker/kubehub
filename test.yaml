@@ -8,7 +8,7 @@ applications:
     image: helloworld
     org: offlinehacker
     role: web-service
-    tag: kekec7
+    tag: kekec1
 groups:
 - name: gatehub
   apps:

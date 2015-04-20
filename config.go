@@ -5,7 +5,6 @@ import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/api"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/client"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/runtime"
-	log "github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io"
 	"text/template"
@@ -74,7 +73,6 @@ func (t *Template) Generate(client *client.Client, data map[string]string) (runt
 	if tp.Execute(buf, data) != nil {
 		return nil, "", err
 	}
-	log.Debug(buf.String())
 
 	obj, err := runtime.YAMLDecoder(client.Codec).Decode([]byte(buf.String()))
 	if err != nil {

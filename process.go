@@ -61,7 +61,7 @@ type Process struct {
 }
 
 func NewProcess(Kube *client.Client, Config *Config, cfgFile string) (*Process, error) {
-	log.Debugf("Loading config file %v", cfgFile)
+	log.Infof("Loading config file %v", cfgFile)
 
 	f, err := os.Open(cfgFile)
 	if err != nil {
@@ -77,6 +77,8 @@ func NewProcess(Kube *client.Client, Config *Config, cfgFile string) (*Process, 
 }
 
 func (p *Process) Commit() error {
+	log.Info("Deploying new config")
+
 	p.mutex.Lock()
 
 	f, err := os.Create(p.cfgFile)
@@ -135,7 +137,7 @@ func (p *Process) CreateNamespaces(logger *log.Logger) error {
 		name := p.Config.Project + "-" + ns.Name
 		nsLogger := logger.WithFields(log.Fields{"namespace": ns.Name})
 
-		nsLogger.Debug("Processing namespace")
+		nsLogger.Info("Processing namespace")
 
 		setNs := func(ns api.Namespace) api.Namespace {
 			ns.ObjectMeta.Name = name
@@ -148,7 +150,7 @@ func (p *Process) CreateNamespaces(logger *log.Logger) error {
 
 		namespace := setNs(api.Namespace{})
 		if val, ok := kubeNsIndex[name]; ok {
-			nsLogger.Debug("Updating namespace")
+			nsLogger.Info("Updating namespace")
 
 			val.(*Entity).Processed = true
 			currentNs := setNs(val.(*Entity).Value.(api.Namespace))
@@ -162,7 +164,7 @@ func (p *Process) CreateNamespaces(logger *log.Logger) error {
 				nsLogger.Errorf("Cannot create apps")
 			}
 		} else {
-			nsLogger.Debug("Creating namespace")
+			nsLogger.Info("Creating namespace")
 
 			_, err := p.Kube.Namespaces().Create(&namespace)
 			if err != nil {
@@ -181,7 +183,7 @@ func (p *Process) CreateNamespaces(logger *log.Logger) error {
 	}, Values(kubeNsIndex))
 	for _, ns := range notProcessed {
 		ns := ns.(*Entity).Value.(api.Namespace)
-		logger.WithFields(log.Fields{"namespace": ns.Name}).Debug("Deleting namespace")
+		logger.WithFields(log.Fields{"namespace": ns.Name}).Info("Deleting namespace")
 		// For some reason have to call delete twice
 		err := p.Kube.Namespaces().Delete(ns.Name)
 		err = p.Kube.Namespaces().Delete(ns.Name)
@@ -212,7 +214,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 
 	labelSelector, err := labels.Parse("kubehub/enable=true,kubehub/project=" + p.Config.Project)
 	if err != nil {
-		nsLogger.Error("Cannot create label", err)
+		nsLogger.Errorf("Cannot create label %v", err)
 		return err
 	}
 
@@ -276,7 +278,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 		if app.Service != "" {
 			scLogger := appLogger.WithFields(log.Fields{"template": app.Service})
 
-			scLogger.Debug("Processing service")
+			scLogger.Info("Processing service")
 
 			template, ok := templates[app.Service].(Template)
 			if !ok {
@@ -296,7 +298,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 
 			if entity, ok := kubeScIndex[app.Name].(*Entity); ok {
 				sc := entity.Value.(api.Service)
-				scLogger.Debug("Updating service")
+				scLogger.Info("Updating service")
 
 				if tplSc.Spec.PortalIP == "" {
 					tplSc.Spec.PortalIP = sc.Spec.PortalIP
@@ -311,7 +313,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 
 				entity.Processed = true
 			} else {
-				scLogger.Debug("Creating service")
+				scLogger.Info("Creating service")
 				_, err := p.Kube.Services(nsName).Create(tplSc)
 				if err != nil {
 					scLogger.Errorf("Cannot create service %v", err)
@@ -324,7 +326,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 		if app.ReplicationController != "" {
 			rcLogger := appLogger.WithFields(log.Fields{"template": app.ReplicationController})
 
-			rcLogger.Debug("Processing ReplicationController")
+			rcLogger.Info("Processing ReplicationController")
 
 			template, ok := templates[app.ReplicationController].(Template)
 			if !ok {
@@ -345,10 +347,10 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 			if entity, ok := kubeRcIndex[app.Name].(*Entity); ok {
 				rc := entity.Value.(api.ReplicationController)
 
-				rcLogger.Debug("Updating rc")
+				rcLogger.Info("Updating rc")
 
 				if tplRc.Name != rc.Name {
-					rcLogger.WithFields(log.Fields{"to": tplRc.Name}).Debug("Rollupdating")
+					rcLogger.WithFields(log.Fields{"to": tplRc.Name}).Info("Rollupdating")
 
 					buf := bytes.NewBuffer(nil)
 					updater := kubectl.NewRollingUpdater(nsName, p.Kube)
@@ -368,7 +370,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 
 				entity.Processed = true
 			} else {
-				rcLogger.Debug("Creating replication controller")
+				rcLogger.Info("Creating replication controller")
 				_, err := p.Kube.ReplicationControllers(nsName).Create(tplRc)
 				if err != nil {
 					rcLogger.Errorf("Cannot create replication controller %v", err)
@@ -413,7 +415,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 	for _, sc := range gcServices {
 		sc := sc.(*Entity).Value.(api.Service)
 
-		nsLogger.WithFields(log.Fields{"service": sc.Name}).Debug("Deleting service")
+		nsLogger.WithFields(log.Fields{"service": sc.Name}).Info("Deleting service")
 		err := p.Kube.Services(sc.Namespace).Delete(sc.Name)
 		if err != nil {
 			nsLogger.WithFields(log.Fields{"service": sc.Name}).Errorf("Cannot delete service %v", err)
@@ -427,7 +429,7 @@ func (p *Process) CreateApps(ns Namespace, logger *log.Logger) error {
 	}, Values(kubeRcIndex))
 	for _, rc := range gcRc {
 		rc := rc.(*Entity).Value.(api.ReplicationController)
-		nsLogger.WithFields(log.Fields{"rc": rc.Name}).Debug("Deleting rc")
+		nsLogger.WithFields(log.Fields{"rc": rc.Name}).Info("Deleting rc")
 
 		rc.Spec.Replicas = 0
 		p.Kube.ReplicationControllers(rc.Namespace).Update(&rc)
