@@ -393,7 +393,7 @@ func (api *Api) Serve(host string) error {
 	ws = new(restful.WebService)
 	ws.
 		Path("/hooks").
-		Consumes(restful.MIME_JSON).
+		//Consumes(restful.MIME_JSON).
 		Produces(restful.MIME_JSON).
 		Doc("Deployment hooks")
 
