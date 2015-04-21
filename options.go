@@ -17,7 +17,7 @@ type KubernetesOptions struct {
 type Options struct {
 	Kubernetes KubernetesOptions `group:"Kubernetes Options" namespace:"kube"`
 	LogLevel   string            `short:"v" long:"log_level" description:"Loglevel panic/fatal/error/warn/info/debug" default:"info"`
-	File       string            `short:"c" long:"file" description:"Config file" value-name:"FILE"`
+	File       string            `short:"c" long:"config" description:"Config file" value-name:"FILE"`
 	Host       string            `short:"h" long:"host" description:"Host where to serve" value-name:"HOST" default:":8081"`
 }
 

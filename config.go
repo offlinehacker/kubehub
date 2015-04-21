@@ -55,10 +55,10 @@ func (c *Config) Load(reader io.Reader) error {
 
 type Template struct {
 	// Template name
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name" description:"Template name"`
 
 	// Template content
-	Content string `json:"template" yaml:"template"`
+	Content string `json:"template" yaml:"template" description:"YAML or JSON formated kubernetes config template"`
 }
 
 // Generates config from template
@@ -86,37 +86,37 @@ func (t *Template) Generate(client *client.Client, data map[string]string) (runt
 
 type Application struct {
 	// Application name
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name" description:"Name of the application"`
 
 	// Replication controller name used by application
-	ReplicationController string `json:"replicationController" yaml:"replicationController"`
+	ReplicationController string `json:"replicationController" yaml:"replicationController" description:"Name of the repplication controller template"`
 
 	// Service template name used by application
-	Service string `json:"service" yaml:"service"`
+	Service string `json:"service" yaml:"service" description:"Name of the service template"`
 
 	// Application tags
-	Tags map[string]string `json:"tags" yaml:"tags"`
+	Tags map[string]string `json:"tags" yaml:"tags" description:"Template tags associated with application"`
 }
 
 // Groups of applications
 type ApplicationGroup struct {
 	// Application group name
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name" description:"Name of the application group"`
 
 	// List of all applications in a group
-	Applications []string `json:"apps" yaml:"apps"`
+	Applications []string `json:"apps" yaml:"apps" description:"List of application names in group"`
 
 	// Application group tags
-	Tags map[string]string `json:"tags" yaml:"tags"`
+	Tags map[string]string `json:"tags" yaml:"tags" description:"Template tags associated with application group"`
 }
 
 type Namespace struct {
 	// Namespace name
-	Name string `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name" description:"Name of the namespace"`
 
 	// Selected group of applications for namespace
-	ApplicationGroup string `json:"group" yaml:"group"`
+	ApplicationGroup string `json:"group" yaml:"group" description:"Name of the application group associated with namespace"`
 
 	// Namespace tags
-	Tags map[string]string `json:"tags" yaml:"tags"`
+	Tags map[string]string `json:"tags" yaml:"tags" description:"Template tags associated with namespace"`
 }
