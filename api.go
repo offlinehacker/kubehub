@@ -166,12 +166,12 @@ func (a *Api) newtag(req *restful.Request, res *restful.Response) {
 	tag := req.QueryParameter("tag")
 	imageFound := false
 
-	if tag == "" {
-		res.WriteErrorString(http.StatusBadRequest, "Tag not set.")
+	log.Debugf("Newtag %v %v", name, tag)
+
+	if tag == "" || tag == name {
+		res.WriteErrorString(http.StatusBadRequest, "Tag name invalid.")
 		return
 	}
-
-	log.Debugf("Newtag %v %v", name, tag)
 
 	for idx, app := range a.Process.Config.Applications {
 		image, ok := app.Tags["image"]
